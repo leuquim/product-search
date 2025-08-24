@@ -3,12 +3,13 @@
 # Quick Start Script for Lenovo Pricing Product Search
 # Fast startup without reinstalling dependencies
 
-set -e
+# Removed 'set -e' to prevent terminal crashes on errors
 
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Change to script directory
@@ -42,25 +43,43 @@ if [ -d "venv" ]; then
             source venv/Scripts/activate
         fi
         echo -e "${BLUE}Installing dependencies...${NC}"
-        $PIP_CMD install -q -r requirements.txt
+        if ! $PIP_CMD install -q -r requirements.txt; then
+            echo -e "${RED}❌ Failed to install dependencies. Please check your internet connection and try again.${NC}"
+            exit 1
+        fi
         echo -e "${GREEN}✓ Setup complete!${NC}"
     fi
     
     # Check if dependencies are installed (quick check for key package)
     if ! $PYTHON_CMD -c "import duckdb" 2>/dev/null; then
         echo -e "${YELLOW}⚠ Dependencies missing, installing...${NC}"
-        $PIP_CMD install -q -r requirements.txt
+        if ! $PIP_CMD install -q -r requirements.txt; then
+            echo -e "${RED}❌ Failed to install dependencies. Please check your internet connection and try again.${NC}"
+            exit 1
+        fi
     fi
 else
     echo -e "${YELLOW}Setting up virtual environment (first time only)...${NC}"
-    $PYTHON_CMD -m venv venv
+    if ! $PYTHON_CMD -m venv venv; then
+        echo -e "${RED}❌ Failed to create virtual environment. Make sure python3-venv is installed.${NC}"
+        echo -e "${BLUE}💡 Try: sudo apt install python3.10-venv${NC}"
+        exit 1
+    fi
+    
     if [ -f "venv/bin/activate" ]; then
         source venv/bin/activate
-    else
+    elif [ -f "venv/Scripts/activate" ]; then
         source venv/Scripts/activate
+    else
+        echo -e "${RED}❌ Could not find activation script${NC}"
+        exit 1
     fi
+    
     echo -e "${BLUE}Installing dependencies...${NC}"
-    $PIP_CMD install -q -r requirements.txt
+    if ! $PIP_CMD install -q -r requirements.txt; then
+        echo -e "${RED}❌ Failed to install dependencies. Please check your internet connection and try again.${NC}"
+        exit 1
+    fi
     echo -e "${GREEN}✓ Setup complete!${NC}"
 fi
 
@@ -92,4 +111,10 @@ echo -e "${BLUE}   - Default: ASSEMBLY and DESCRIPTION${NC}"
 echo -e "${BLUE}   - Use 'Select Columns' button in search interface${NC}"
 echo ""
 
-$PYTHON_CMD -m product_search.web_app
+# Start the web application
+echo -e "${GREEN}Starting web application...${NC}"
+if ! $PYTHON_CMD -m product_search.web_app; then
+    echo -e "${RED}❌ Failed to start web application${NC}"
+    echo -e "${BLUE}💡 Check that all dependencies are installed correctly${NC}"
+    exit 1
+fi
