@@ -12,8 +12,9 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Change to script directory
-cd "$(dirname "$0")"
+# Change to script directory (handle both bash and sourced execution)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "$SCRIPT_DIR"
 
 # Determine Python command
 if command -v python3 &> /dev/null; then
@@ -23,6 +24,16 @@ else
     PYTHON_CMD="python"
     PIP_CMD="pip"
 fi
+
+# Check if python3-venv is available (before trying to create venv)
+echo -e "${BLUE}🔍 Checking system requirements...${NC}"
+if ! $PYTHON_CMD -m venv --help &> /dev/null; then
+    echo -e "${RED}❌ python3-venv is not installed${NC}"
+    echo -e "${BLUE}💡 Install with: sudo apt install python3.10-venv${NC}"
+    echo -e "${YELLOW}⚠ After installation, run this script again${NC}"
+    return 1 2>/dev/null || exit 1
+fi
+echo -e "${GREEN}✓ Python venv module available${NC}"
 
 # Check if virtual environment exists
 if [ -d "venv" ]; then
@@ -36,16 +47,26 @@ if [ -d "venv" ]; then
     else
         echo -e "${YELLOW}⚠ Activation script not found, recreating venv...${NC}"
         rm -rf venv
-        $PYTHON_CMD -m venv venv
+        if ! $PYTHON_CMD -m venv venv; then
+            echo -e "${RED}❌ Failed to create virtual environment. Make sure python3-venv is installed.${NC}"
+            echo -e "${BLUE}💡 Try: sudo apt install python3.10-venv${NC}"
+            return 1 2>/dev/null || exit 1
+        fi
+        
+        # Try activation after successful creation
         if [ -f "venv/bin/activate" ]; then
             source venv/bin/activate
-        else
+        elif [ -f "venv/Scripts/activate" ]; then
             source venv/Scripts/activate
+        else
+            echo -e "${RED}❌ Could not find activation script after venv creation${NC}"
+            return 1 2>/dev/null || exit 1
         fi
+        
         echo -e "${BLUE}Installing dependencies...${NC}"
         if ! $PIP_CMD install -q -r requirements.txt; then
             echo -e "${RED}❌ Failed to install dependencies. Please check your internet connection and try again.${NC}"
-            exit 1
+            return 1 2>/dev/null || exit 1
         fi
         echo -e "${GREEN}✓ Setup complete!${NC}"
     fi
@@ -55,7 +76,7 @@ if [ -d "venv" ]; then
         echo -e "${YELLOW}⚠ Dependencies missing, installing...${NC}"
         if ! $PIP_CMD install -q -r requirements.txt; then
             echo -e "${RED}❌ Failed to install dependencies. Please check your internet connection and try again.${NC}"
-            exit 1
+            return 1 2>/dev/null || exit 1
         fi
     fi
 else
@@ -63,7 +84,7 @@ else
     if ! $PYTHON_CMD -m venv venv; then
         echo -e "${RED}❌ Failed to create virtual environment. Make sure python3-venv is installed.${NC}"
         echo -e "${BLUE}💡 Try: sudo apt install python3.10-venv${NC}"
-        exit 1
+        return 1 2>/dev/null || exit 1
     fi
     
     if [ -f "venv/bin/activate" ]; then
@@ -72,13 +93,13 @@ else
         source venv/Scripts/activate
     else
         echo -e "${RED}❌ Could not find activation script${NC}"
-        exit 1
+        return 1 2>/dev/null || exit 1
     fi
     
     echo -e "${BLUE}Installing dependencies...${NC}"
     if ! $PIP_CMD install -q -r requirements.txt; then
         echo -e "${RED}❌ Failed to install dependencies. Please check your internet connection and try again.${NC}"
-        exit 1
+        return 1 2>/dev/null || exit 1
     fi
     echo -e "${GREEN}✓ Setup complete!${NC}"
 fi
@@ -116,5 +137,5 @@ echo -e "${GREEN}Starting web application...${NC}"
 if ! $PYTHON_CMD -m product_search.web_app; then
     echo -e "${RED}❌ Failed to start web application${NC}"
     echo -e "${BLUE}💡 Check that all dependencies are installed correctly${NC}"
-    exit 1
+    return 1 2>/dev/null || exit 1
 fi
