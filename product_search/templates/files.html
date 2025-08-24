@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Management - Lenovo Pricing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="h-full bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-full">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">File Management</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <a href="/" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                            Back to Search
+                        </a>
+                        <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                            <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Upload Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+                    <div class="p-6">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Import New File</h2>
+                        
+                        <!-- File Upload -->
+                        <div id="upload-area" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                <label for="file-upload" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-primary-600 hover:text-primary-500">
+                                    <span>Upload a file</span>
+                                    <input id="file-upload" name="file-upload" type="file" class="sr-only" accept=".xlsx,.xls">
+                                </label>
+                                or drag and drop
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Excel files only (.xlsx, .xls)</p>
+                        </div>
+
+                        <!-- Preview Section (hidden by default) -->
+                        <div id="preview-section" class="hidden mt-6">
+                            <h3 class="text-md font-semibold mb-3 text-gray-900 dark:text-white">File Preview</h3>
+                            <div id="file-info" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                            
+                            <!-- Column Selection -->
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Select columns to index for search:</h4>
+                                <div id="column-checkboxes" class="grid grid-cols-2 md:grid-cols-3 gap-2"></div>
+                            </div>
+                            
+                            <!-- Preview Table -->
+                            <div class="overflow-x-auto">
+                                <table id="preview-table" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead class="bg-gray-50 dark:bg-gray-700">
+                                        <tr id="preview-headers"></tr>
+                                    </thead>
+                                    <tbody id="preview-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Import Button -->
+                            <div class="mt-4 flex justify-end space-x-3">
+                                <button id="cancel-import" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500">
+                                    Cancel
+                                </button>
+                                <button id="start-import" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                                    Import File
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar (hidden by default) -->
+                        <div id="progress-section" class="hidden mt-6">
+                            <div class="mb-2 flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                <span>Importing...</span>
+                                <span id="progress-text">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                <div id="progress-bar" class="bg-primary-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Imported Files List -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <div class="p-6">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Imported Files</h2>
+                        
+                        <div id="files-list" class="space-y-4">
+                            <!-- Files will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            html.classList.add('dark');
+        }
+
+        // File upload handling
+        const fileInput = document.getElementById('file-upload');
+        const uploadArea = document.getElementById('upload-area');
+        const previewSection = document.getElementById('preview-section');
+        const progressSection = document.getElementById('progress-section');
+        let selectedFile = null;
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        async function handleFileSelect(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                alert('Please select an Excel file');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Show loading
+            uploadArea.classList.add('opacity-50');
+            
+            // Upload file for preview
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/files/preview', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showPreview(data);
+                } else {
+                    alert('Error previewing file: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error uploading file: ' + error);
+            } finally {
+                uploadArea.classList.remove('opacity-50');
+            }
+        }
+
+        function showPreview(data) {
+            // Show preview section
+            uploadArea.classList.add('hidden');
+            previewSection.classList.remove('hidden');
+            
+            // File info
+            document.getElementById('file-info').innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div><span class="font-medium">Filename:</span> ${data.filename}</div>
+                    <div><span class="font-medium">Size:</span> ${data.file_size_mb} MB</div>
+                    <div><span class="font-medium">Rows:</span> ${data.total_rows.toLocaleString()}</div>
+                    <div><span class="font-medium">Columns:</span> ${data.headers.length}</div>
+                </div>
+            `;
+            
+            // Column checkboxes
+            const columnCheckboxes = document.getElementById('column-checkboxes');
+            columnCheckboxes.innerHTML = '';
+            
+            data.headers.forEach(header => {
+                const isChecked = data.suggested_indexes.includes(header);
+                const div = document.createElement('div');
+                div.className = 'flex items-center';
+                div.innerHTML = `
+                    <input type="checkbox" id="col-${header}" value="${header}" 
+                           ${isChecked ? 'checked' : ''} 
+                           class="mr-2 rounded text-primary-600">
+                    <label for="col-${header}" class="text-sm text-gray-700 dark:text-gray-300">${header}</label>
+                `;
+                columnCheckboxes.appendChild(div);
+            });
+            
+            // Preview table headers
+            const headerRow = document.getElementById('preview-headers');
+            headerRow.innerHTML = '';
+            data.headers.forEach(header => {
+                const th = document.createElement('th');
+                th.className = 'px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider';
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            
+            // Preview table data
+            const tbody = document.getElementById('preview-body');
+            tbody.innerHTML = '';
+            data.preview_data.forEach(row => {
+                const tr = document.createElement('tr');
+                data.headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.className = 'px-3 py-2 text-sm text-gray-900 dark:text-gray-100';
+                    td.textContent = row[header] || '';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Cancel import
+        document.getElementById('cancel-import').addEventListener('click', () => {
+            previewSection.classList.add('hidden');
+            uploadArea.classList.remove('hidden');
+            selectedFile = null;
+            fileInput.value = '';
+        });
+
+        // Start import
+        document.getElementById('start-import').addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            // Get selected columns
+            const checkboxes = document.querySelectorAll('#column-checkboxes input[type="checkbox"]:checked');
+            const indexedColumns = Array.from(checkboxes).map(cb => cb.value);
+            
+            // Hide preview, show progress
+            previewSection.classList.add('hidden');
+            progressSection.classList.remove('hidden');
+            
+            // Upload file for import
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('indexed_columns', JSON.stringify(indexedColumns));
+            
+            try {
+                const response = await fetch('/api/files/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Successfully imported ${data.rows_imported.toLocaleString()} rows!`);
+                    // Reset UI
+                    progressSection.classList.add('hidden');
+                    uploadArea.classList.remove('hidden');
+                    selectedFile = null;
+                    fileInput.value = '';
+                    // Reload files list
+                    loadFilesList();
+                } else {
+                    alert('Error importing file: ' + data.error);
+                    progressSection.classList.add('hidden');
+                    previewSection.classList.remove('hidden');
+                }
+            } catch (error) {
+                alert('Error importing file: ' + error);
+                progressSection.classList.add('hidden');
+                previewSection.classList.remove('hidden');
+            }
+        });
+
+        // Load files list
+        async function loadFilesList() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                const filesList = document.getElementById('files-list');
+                
+                if (data.files && data.files.length > 0) {
+                    filesList.innerHTML = data.files.map(file => `
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h3 class="text-md font-semibold text-gray-900 dark:text-white">${file.filename}</h3>
+                                    <div class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                        <div>Rows: ${file.row_count.toLocaleString()}</div>
+                                        <div>Size: ${file.file_size_mb} MB</div>
+                                        <div>Imported: ${new Date(file.import_date).toLocaleDateString()}</div>
+                                        <div>Status: <span class="text-green-600 dark:text-green-400">${file.status}</span></div>
+                                    </div>
+                                    ${file.indexed_columns.length > 0 ? `
+                                        <div class="mt-2 text-sm">
+                                            <span class="text-gray-500 dark:text-gray-400">Indexed columns:</span>
+                                            <span class="text-gray-700 dark:text-gray-300">${file.indexed_columns.join(', ')}</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="deleteFile(${file.file_id}, '${file.filename}')" 
+                                            class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    filesList.innerHTML = `
+                        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                            No files imported yet. Upload your first Excel file above.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+
+        // Delete file
+        async function deleteFile(fileId, filename) {
+            if (!confirm(`Are you sure you want to delete "${filename}"? This will remove all data from this file.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/files/${fileId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Successfully deleted "${filename}"`);
+                    loadFilesList();
+                } else {
+                    alert('Error deleting file: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error deleting file: ' + error);
+            }
+        }
+
+        // Load files on page load
+        loadFilesList();
+    </script>
+</body>
+
+</html>

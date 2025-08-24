@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Search - Lenovo Pricing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="h-full bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-full">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Product Search</h1>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Multi-File Edition</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Stats -->
+                        <div class="hidden sm:flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+                            <span>{{ stats.total_files }} files</span>
+                            <span>{{ "{:,}".format(stats.total_records) }} products</span>
+                            <span>{{ stats.database_size_mb }} MB</span>
+                        </div>
+                        
+                        <!-- File Management Link -->
+                        <a href="/files" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                            Manage Files
+                        </a>
+                        
+                        <!-- Theme Toggle -->
+                        <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                            <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Search Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+                    <div class="p-6">
+                        <!-- Search Tabs -->
+                        <div class="flex space-x-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                            <button id="tab-local" class="px-4 py-2 border-b-2 border-primary-500 text-primary-600 dark:text-primary-400 font-medium">
+                                Local Database
+                            </button>
+                            <button id="tab-lenovo" class="px-4 py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                                Lenovo Press
+                            </button>
+                        </div>
+
+                        <!-- Local Search -->
+                        <div id="local-search">
+                            <!-- Search Input -->
+                            <div class="mb-4">
+                                <div class="relative">
+                                    <input type="text" id="search-input" 
+                                           placeholder="Search products (e.g., assembly number, description...)"
+                                           class="w-full px-4 py-3 pl-12 pr-32 text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <svg class="absolute left-4 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    <div class="absolute right-2 top-2 flex space-x-2">
+                                        <button id="filter-btn" class="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500">
+                                            Filter Files
+                                        </button>
+                                        <button id="search-btn" class="px-4 py-1.5 text-sm bg-primary-600 text-white rounded hover:bg-primary-700">
+                                            Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- File Filter (hidden by default) -->
+                            <div id="file-filter" class="hidden mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <h3 class="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Search in files:</h3>
+                                <div id="file-checkboxes" class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    <!-- Populated dynamically -->
+                                </div>
+                                <div class="mt-3 flex justify-between">
+                                    <button id="select-all-files" class="text-sm text-primary-600 hover:text-primary-700">Select All</button>
+                                    <button id="deselect-all-files" class="text-sm text-gray-600 hover:text-gray-700">Clear All</button>
+                                </div>
+                            </div>
+
+                            <!-- View Options -->
+                            <div class="mb-4 flex justify-between items-center">
+                                <div class="flex items-center space-x-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="group-by-file" class="mr-2 rounded text-primary-600">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Group by file</span>
+                                    </label>
+                                    <button id="columns-btn" class="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500">
+                                        Select Columns
+                                    </button>
+                                </div>
+                                <div id="result-summary" class="text-sm text-gray-600 dark:text-gray-400"></div>
+                            </div>
+
+                            <!-- Column Selection (hidden by default) -->
+                            <div id="column-selector" class="hidden mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <h3 class="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Select visible columns:</h3>
+                                <div id="column-checkboxes" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                                    <!-- Populated dynamically -->
+                                </div>
+                                <div class="mt-3 flex justify-between">
+                                    <div class="space-x-2">
+                                        <button id="select-default-columns" class="text-sm text-primary-600 hover:text-primary-700">Default</button>
+                                        <button id="select-all-columns" class="text-sm text-primary-600 hover:text-primary-700">Select All</button>
+                                        <button id="deselect-all-columns" class="text-sm text-gray-600 hover:text-gray-700">Clear All</button>
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        <span id="selected-count">0</span> of <span id="total-columns">0</span> columns selected
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lenovo Search (hidden by default) -->
+                        <div id="lenovo-search" class="hidden">
+                            <div class="mb-4">
+                                <input type="text" id="lenovo-search-input" 
+                                       placeholder="Search Lenovo Press documentation..."
+                                       class="w-full px-4 py-3 text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            </div>
+                            <button id="lenovo-search-btn" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                                Search Lenovo Press
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results-container" class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <div class="p-6">
+                        <div id="loading" class="hidden text-center py-8">
+                            <div class="inline-flex items-center">
+                                <svg class="animate-spin h-5 w-5 mr-3 text-primary-600" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Searching...
+                            </div>
+                        </div>
+                        
+                        <div id="results" class="overflow-x-auto">
+                            <!-- Results will be populated here -->
+                        </div>
+                        
+                        <div id="no-results" class="hidden text-center py-8 text-gray-500 dark:text-gray-400">
+                            No results found. Try a different search term or check your file filters.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+        
+        if (localStorage.getItem('theme') === 'dark') {
+            html.classList.add('dark');
+        }
+
+        // Tab switching
+        const tabLocal = document.getElementById('tab-local');
+        const tabLenovo = document.getElementById('tab-lenovo');
+        const localSearch = document.getElementById('local-search');
+        const lenovoSearch = document.getElementById('lenovo-search');
+        
+        tabLocal.addEventListener('click', () => {
+            tabLocal.classList.add('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+            tabLocal.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            tabLenovo.classList.remove('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+            tabLenovo.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            localSearch.classList.remove('hidden');
+            lenovoSearch.classList.add('hidden');
+        });
+        
+        tabLenovo.addEventListener('click', () => {
+            tabLenovo.classList.add('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+            tabLenovo.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            tabLocal.classList.remove('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+            tabLocal.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            lenovoSearch.classList.remove('hidden');
+            localSearch.classList.add('hidden');
+        });
+
+        // File filter toggle
+        const filterBtn = document.getElementById('filter-btn');
+        const fileFilter = document.getElementById('file-filter');
+        
+        filterBtn.addEventListener('click', () => {
+            fileFilter.classList.toggle('hidden');
+            loadFileCheckboxes();
+        });
+
+        // Column selector toggle
+        const columnsBtn = document.getElementById('columns-btn');
+        const columnSelector = document.getElementById('column-selector');
+        
+        columnsBtn.addEventListener('click', () => {
+            columnSelector.classList.toggle('hidden');
+            if (!columnSelector.classList.contains('hidden')) {
+                loadColumnCheckboxes();
+            }
+        });
+
+        // Load file checkboxes
+        async function loadFileCheckboxes() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                const container = document.getElementById('file-checkboxes');
+                container.innerHTML = '';
+                
+                if (data.files && data.files.length > 0) {
+                    data.files.forEach(file => {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center';
+                        div.innerHTML = `
+                            <input type="checkbox" id="file-${file.file_id}" value="${file.file_id}" checked
+                                   class="mr-2 rounded text-primary-600">
+                            <label for="file-${file.file_id}" class="text-sm text-gray-700 dark:text-gray-300">
+                                ${file.filename} (${file.row_count.toLocaleString()} rows)
+                            </label>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+
+        // Select/deselect all files
+        document.getElementById('select-all-files').addEventListener('click', () => {
+            document.querySelectorAll('#file-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = true);
+        });
+        
+        document.getElementById('deselect-all-files').addEventListener('click', () => {
+            document.querySelectorAll('#file-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        });
+
+        // Column management variables and functions
+        let allColumns = [];
+        const defaultColumns = ['ASSEMBLY', 'DESCRIPTION'];
+        
+        // Load column checkboxes
+        async function loadColumnCheckboxes() {
+            try {
+                const response = await fetch('/api/columns');
+                const data = await response.json();
+                
+                if (data.success && data.columns) {
+                    allColumns = data.columns;
+                    const container = document.getElementById('column-checkboxes');
+                    const savedColumns = getVisibleColumns();
+                    
+                    container.innerHTML = '';
+                    
+                    allColumns.forEach(column => {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center';
+                        const isChecked = savedColumns.includes(column);
+                        div.innerHTML = `
+                            <input type="checkbox" id="col-${column}" value="${column}" ${isChecked ? 'checked' : ''}
+                                   class="mr-2 rounded text-primary-600 column-checkbox">
+                            <label for="col-${column}" class="text-xs text-gray-700 dark:text-gray-300 cursor-pointer">
+                                ${column}
+                            </label>
+                        `;
+                        container.appendChild(div);
+                    });
+                    
+                    // Update counter
+                    updateColumnCounter();
+                    
+                    // Add event listeners to checkboxes
+                    document.querySelectorAll('.column-checkbox').forEach(cb => {
+                        cb.addEventListener('change', () => {
+                            updateColumnCounter();
+                            saveVisibleColumns();
+                            // Refresh search results if there are any
+                            if (searchInput.value.trim()) {
+                                performSearch();
+                            }
+                        });
+                    });
+                }
+                
+                document.getElementById('total-columns').textContent = allColumns.length;
+            } catch (error) {
+                console.error('Error loading columns:', error);
+            }
+        }
+
+        // Update column counter
+        function updateColumnCounter() {
+            const selected = document.querySelectorAll('.column-checkbox:checked').length;
+            document.getElementById('selected-count').textContent = selected;
+        }
+
+        // Get visible columns from checkboxes or localStorage
+        function getVisibleColumns() {
+            // First try to get from checkboxes if they exist
+            const checkboxes = document.querySelectorAll('.column-checkbox:checked');
+            if (checkboxes.length > 0) {
+                return Array.from(checkboxes).map(cb => cb.value);
+            }
+            
+            // Fallback to localStorage
+            const saved = localStorage.getItem('visibleColumns');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    return parsed.length > 0 ? parsed : defaultColumns;
+                } catch (e) {
+                    console.warn('Error parsing saved columns:', e);
+                    return defaultColumns;
+                }
+            }
+            
+            // Final fallback to default columns
+            return defaultColumns;
+        }
+
+        // Save visible columns to localStorage
+        function saveVisibleColumns() {
+            const selected = Array.from(document.querySelectorAll('.column-checkbox:checked'))
+                .map(cb => cb.value);
+            localStorage.setItem('visibleColumns', JSON.stringify(selected));
+        }
+
+        // Column selection buttons
+        document.getElementById('select-default-columns').addEventListener('click', () => {
+            document.querySelectorAll('.column-checkbox').forEach(cb => {
+                cb.checked = defaultColumns.includes(cb.value);
+            });
+            updateColumnCounter();
+            saveVisibleColumns();
+            if (searchInput.value.trim()) performSearch();
+        });
+        
+        document.getElementById('select-all-columns').addEventListener('click', () => {
+            document.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = true);
+            updateColumnCounter();
+            saveVisibleColumns();
+            if (searchInput.value.trim()) performSearch();
+        });
+        
+        document.getElementById('deselect-all-columns').addEventListener('click', () => {
+            document.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = false);
+            updateColumnCounter();
+            saveVisibleColumns();
+            if (searchInput.value.trim()) performSearch();
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const groupByFile = document.getElementById('group-by-file');
+        const resultsContainer = document.getElementById('results');
+        const loading = document.getElementById('loading');
+        const noResults = document.getElementById('no-results');
+        const resultSummary = document.getElementById('result-summary');
+        
+        async function performSearch() {
+            const query = searchInput.value.trim();
+            
+            // Get selected files
+            const selectedFiles = Array.from(document.querySelectorAll('#file-checkboxes input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            
+            // Get selected columns
+            const selectedColumns = getVisibleColumns();
+            
+            // Show loading
+            loading.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            resultsContainer.innerHTML = '';
+            resultSummary.textContent = '';
+            
+            try {
+                const params = new URLSearchParams({
+                    q: query,
+                    group: groupByFile.checked,
+                    limit: 100
+                });
+                
+                selectedFiles.forEach(fileId => params.append('files[]', fileId));
+                selectedColumns.forEach(column => params.append('columns[]', column));
+                
+                const response = await fetch(`/api/search?${params}`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success) {
+                    if (data.grouped) {
+                        displayGroupedResults(data);
+                    } else {
+                        displayFlatResults(data);
+                    }
+                    
+                    // Update summary
+                    if (data.total_count > 0) {
+                        resultSummary.textContent = `Found ${data.total_count.toLocaleString()} results in ${data.search_time}ms`;
+                    }
+                } else {
+                    noResults.classList.remove('hidden');
+                }
+            } catch (error) {
+                loading.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                console.error('Search error:', error);
+            }
+        }
+        
+        function displayGroupedResults(data) {
+            if (Object.keys(data.files).length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            const visibleColumns = data.visible_columns || getVisibleColumns();
+            
+            let html = '';
+            for (const [filename, fileData] of Object.entries(data.files)) {
+                html += `
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+                            ${filename} 
+                            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+                                (${fileData.count} results)
+                            </span>
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                `;
+                
+                // Use visible columns or get columns from first result
+                let columns;
+                if (visibleColumns.length > 0) {
+                    columns = visibleColumns;
+                } else if (fileData.results.length > 0) {
+                    columns = Object.keys(fileData.results[0]).filter(k => !k.startsWith('_') && k !== 'source_file_id');
+                } else {
+                    columns = [];
+                }
+                
+                columns.forEach(col => {
+                    html += `<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">${col}</th>`;
+                });
+                
+                html += `</tr></thead><tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">`;
+                
+                fileData.results.forEach(row => {
+                    html += '<tr>';
+                    columns.forEach(col => {
+                        html += `<td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">${row[col] || ''}</td>`;
+                    });
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div></div>';
+            }
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        function displayFlatResults(data) {
+            if (data.results.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            const visibleColumns = data.visible_columns || getVisibleColumns();
+            
+            // Use visible columns or get columns from first result
+            let columns;
+            if (visibleColumns.length > 0) {
+                columns = visibleColumns;
+            } else if (data.results.length > 0) {
+                columns = Object.keys(data.results[0]).filter(k => !k.startsWith('_') && k !== 'source_file_id');
+            } else {
+                columns = [];
+            }
+            
+            let html = `
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Source</th>
+            `;
+            
+            columns.forEach(col => {
+                html += `<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">${col}</th>`;
+            });
+            
+            html += `</tr></thead><tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">`;
+            
+            data.results.forEach(row => {
+                html += '<tr>';
+                // Show source file
+                html += `<td class="px-3 py-2 text-sm">
+                    <span class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded">
+                        ${row._source_file || 'Unknown'}
+                    </span>
+                </td>`;
+                columns.forEach(col => {
+                    html += `<td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">${row[col] || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            resultsContainer.innerHTML = html;
+        }
+        
+        // Search triggers
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+        groupByFile.addEventListener('change', () => {
+            if (searchInput.value.trim()) performSearch();
+        });
+
+        // Lenovo search
+        const lenovoSearchInput = document.getElementById('lenovo-search-input');
+        const lenovoSearchBtn = document.getElementById('lenovo-search-btn');
+        
+        lenovoSearchBtn.addEventListener('click', async () => {
+            const query = lenovoSearchInput.value.trim();
+            if (!query) return;
+            
+            loading.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            resultsContainer.innerHTML = '';
+            
+            try {
+                const response = await fetch(`/api/lenovo/search?q=${encodeURIComponent(query)}&limit=20`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success && data.items && data.items.length > 0) {
+                    let html = '<div class="space-y-4">';
+                    
+                    data.items.forEach(item => {
+                        html += `
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <h3 class="text-lg font-semibold mb-2">
+                                    <a href="${item.fullUrl}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                        ${item.title}
+                                    </a>
+                                </h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${item.description || ''}</p>
+                                <div class="text-xs text-gray-500">
+                                    Type: ${item.type} | Date: ${item.date}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    resultsContainer.innerHTML = html;
+                } else {
+                    noResults.classList.remove('hidden');
+                }
+            } catch (error) {
+                loading.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                console.error('Lenovo search error:', error);
+            }
+        });
+        
+        lenovoSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') lenovoSearchBtn.click();
+        });
+
+        // Initial load
+        loadFileCheckboxes();
+        loadColumnCheckboxes();
+    </script>
+</body>
+
+</html>
