@@ -292,6 +292,11 @@
                     const container = document.getElementById('column-checkboxes');
                     const savedColumns = getVisibleColumns();
                     
+                    // Debug: Show when loading saved preferences
+                    if (savedColumns.length > 0 && JSON.stringify(savedColumns) !== JSON.stringify(defaultColumns)) {
+                        console.log('✅ Restored saved column preferences:', savedColumns);
+                    }
+                    
                     container.innerHTML = '';
                     
                     allColumns.forEach(column => {
@@ -337,14 +342,16 @@
         }
 
         // Get visible columns from checkboxes or localStorage
-        function getVisibleColumns() {
-            // First try to get from checkboxes if they exist
-            const checkboxes = document.querySelectorAll('.column-checkbox:checked');
-            if (checkboxes.length > 0) {
-                return Array.from(checkboxes).map(cb => cb.value);
+        function getVisibleColumns(forceFromCheckboxes = false) {
+            // If forced to use checkboxes or checkboxes exist and are populated
+            if (forceFromCheckboxes) {
+                const checkboxes = document.querySelectorAll('.column-checkbox:checked');
+                if (checkboxes.length > 0) {
+                    return Array.from(checkboxes).map(cb => cb.value);
+                }
             }
             
-            // Fallback to localStorage
+            // Primary source: localStorage
             const saved = localStorage.getItem('visibleColumns');
             if (saved) {
                 try {
@@ -407,8 +414,11 @@
             const selectedFiles = Array.from(document.querySelectorAll('#file-checkboxes input[type="checkbox"]:checked'))
                 .map(cb => cb.value);
             
-            // Get selected columns
-            const selectedColumns = getVisibleColumns();
+            // Get selected columns from checkboxes (if they exist) or localStorage
+            const checkboxes = document.querySelectorAll('.column-checkbox:checked');
+            const selectedColumns = checkboxes.length > 0 ? 
+                Array.from(checkboxes).map(cb => cb.value) : 
+                getVisibleColumns();
             
             // Show loading
             loading.classList.remove('hidden');
