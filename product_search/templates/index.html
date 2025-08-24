@@ -582,27 +582,110 @@
                 
                 loading.classList.add('hidden');
                 
-                if (data.success && data.items && data.items.length > 0) {
-                    let html = '<div class="space-y-4">';
+                if (data.success) {
+                    let html = '';
                     
-                    data.items.forEach(item => {
+                    // Check if this is an enhanced search with scan results
+                    if (data.scan_results && data.scan_results.length > 0) {
                         html += `
-                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                <h3 class="text-lg font-semibold mb-2">
-                                    <a href="${item.fullUrl}" target="_blank" class="text-primary-600 hover:text-primary-700">
-                                        ${item.title}
-                                    </a>
+                            <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <h3 class="font-semibold text-blue-800 dark:text-blue-200">
+                                    🔍 Enhanced Part Number Search Results
                                 </h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${item.description || ''}</p>
-                                <div class="text-xs text-gray-500">
-                                    Type: ${item.type} | Date: ${item.date}
-                                </div>
+                                <p class="text-sm text-blue-600 dark:text-blue-300">
+                                    Found ${data.total_matches} matches across ${data.pages_scanned} documentation pages
+                                </p>
                             </div>
+                            <div class="space-y-4">
                         `;
-                    });
+                        
+                        data.scan_results.forEach(scanResult => {
+                            if (scanResult.success && scanResult.matches && scanResult.matches.length > 0) {
+                                const pageInfo = scanResult.page_info || {};
+                                html += `
+                                    <div class="border border-green-200 dark:border-green-700 rounded-lg p-4 bg-green-50 dark:bg-green-900/10">
+                                        <h4 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-200">
+                                            ✅ <a href="${scanResult.url}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                                ${pageInfo.title || 'Documentation Page'}
+                                            </a>
+                                        </h4>
+                                        <div class="text-xs text-green-600 dark:text-green-300 mb-3">
+                                            Type: ${pageInfo.resourceType || 'Unknown'} | 
+                                            Published: ${pageInfo.publishDate ? new Date(pageInfo.publishDate).toLocaleDateString() : 'Unknown'}
+                                        </div>
+                                        <div class="text-sm text-green-700 dark:text-green-200 mb-2">
+                                            🎯 Found ${scanResult.total_matches} match(es) for part number(s)
+                                        </div>
+                                `;
+                                
+                                scanResult.matches.forEach(match => {
+                                    if (match.table_data && match.table_data.length > 0) {
+                                        match.table_data.forEach(table => {
+                                            html += `
+                                                <div class="mt-3 p-3 bg-white dark:bg-gray-800 rounded border">
+                                                    ${table.caption ? `<h5 class="font-medium mb-2">${table.caption}</h5>` : ''}
+                                                    <div class="overflow-x-auto">
+                                                        <table class="min-w-full text-xs">
+                                                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                                                <tr>
+                                                                    ${table.headers.map(h => `<th class="px-2 py-1 text-left font-medium">${h}</th>`).join('')}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                ${table.rows.map(row => `
+                                                                    <tr class="border-t">
+                                                                        ${row.map(cell => {
+                                                                            const highlighted = cell.includes(query) ? 
+                                                                                cell.replace(new RegExp(query, 'gi'), `<mark class="bg-yellow-300 dark:bg-yellow-600">${query}</mark>`) : 
+                                                                                cell;
+                                                                            return `<td class="px-2 py-1">${highlighted}</td>`;
+                                                                        }).join('')}
+                                                                    </tr>
+                                                                `).join('')}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+                                    }
+                                });
+                                
+                                html += `</div>`;
+                            }
+                        });
+                        
+                        html += '</div>';
+                    } 
+                    // Fallback to basic search results
+                    else if (data.items && data.items.length > 0) {
+                        html += '<div class="space-y-4">';
+                        
+                        data.items.forEach(item => {
+                            html += `
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                    <h3 class="text-lg font-semibold mb-2">
+                                        <a href="${item.fullUrl}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                            ${item.title}
+                                        </a>
+                                    </h3>
+                                    <div class="text-xs text-gray-500 space-y-1">
+                                        <div>Type: ${item.resourceType || 'Unknown'}</div>
+                                        <div>Published: ${item.publishDate ? new Date(item.publishDate).toLocaleDateString() : 'Unknown'}</div>
+                                        ${item.lastUpdate ? `<div>Updated: ${new Date(item.lastUpdate).toLocaleDateString()}</div>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div>';
+                    }
                     
-                    html += '</div>';
-                    resultsContainer.innerHTML = html;
+                    if (html) {
+                        resultsContainer.innerHTML = html;
+                    } else {
+                        noResults.classList.remove('hidden');
+                    }
                 } else {
                     noResults.classList.remove('hidden');
                 }

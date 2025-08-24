@@ -378,7 +378,15 @@ def api_lenovo_search():
     
     try:
         searcher = LenovoSearcher()
-        results = searcher.search_lenovo_press(search_term, limit)
+        
+        # If the search term looks like a part number (short alphanumeric), 
+        # also scan pages for that part number
+        if len(search_term) <= 10 and search_term.replace('-', '').replace('_', '').isalnum():
+            print(f"🔍 Performing enhanced search with part number scanning for: {search_term}")
+            results = searcher.search_and_scan(search_term, [search_term], max_pages=limit)
+        else:
+            # Just do basic search for longer terms
+            results = searcher.search_lenovo_press(search_term, limit)
         
         search_time = time.time() - start_time
         results['search_time'] = round(search_time * 1000, 2)
