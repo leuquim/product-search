@@ -62,27 +62,20 @@ if ! python -c "import duckdb, flask, openpyxl, pandas" 2>/dev/null; then
     NEED_INSTALL=true
 fi
 
-# Install dependencies with live progress
+# Install dependencies with full progress
 if [ "$NEED_INSTALL" = true ]; then
     echo -e "${BLUE}📥 Installing dependencies...${NC}"
-    echo -e "${YELLOW}   (This may take a moment for the first run)${NC}"
+    echo
     
-    # Install with live output, but clean up the display
-    $PIP install -r requirements.txt 2>&1 | while IFS= read -r line; do
-        if [[ $line == *"Collecting"* ]]; then
-            echo -e "${BLUE}   📦 $(echo $line | sed 's/Collecting //')${NC}"
-        elif [[ $line == *"Installing"* ]]; then
-            echo -e "${GREEN}   ✅ $(echo $line | sed 's/Installing collected packages: //')${NC}"
-        elif [[ $line == *"Successfully installed"* ]]; then
-            echo -e "${GREEN}✅ All dependencies installed${NC}"
-        fi
-    done
-    
-    # Verify installation
-    if ! python -c "import duckdb, flask, openpyxl, pandas" 2>/dev/null; then
+    # Show full pip output with progress bars, downloads, etc.
+    if ! $PIP install -r requirements.txt; then
+        echo
         echo -e "${RED}❌ Dependency installation failed${NC}"
         return 1 2>/dev/null || exit 1
     fi
+    
+    echo
+    echo -e "${GREEN}✅ All dependencies installed successfully${NC}"
 else
     echo -e "${GREEN}✅ Dependencies already installed${NC}"
 fi
