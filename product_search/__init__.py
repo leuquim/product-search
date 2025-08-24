@@ -8,15 +8,16 @@ providing fast search capabilities through CLI and web interfaces.
 __version__ = "1.0.0"
 __author__ = "Product Search Team"
 
-from .database import ProductDatabase
-from .importer import ExcelImporter, import_excel_file, preview_excel_file
+from .database import MultiFileDatabase
+from .file_manager import FileManager
 from .config import DATABASE_PATH, DEFAULT_SEARCH_LIMIT
+from .web_app import create_app, run_server
 
 __all__ = [
-    'ProductDatabase',
-    'ExcelImporter', 
-    'import_excel_file',
-    'preview_excel_file',
+    'MultiFileDatabase',
+    'FileManager',
     'DATABASE_PATH',
-    'DEFAULT_SEARCH_LIMIT'
+    'DEFAULT_SEARCH_LIMIT',
+    'create_app',
+    'run_server'
 ]
