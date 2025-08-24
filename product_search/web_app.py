@@ -30,7 +30,7 @@ def index():
     """Main search page"""
     with MultiFileDatabase() as db:
         stats = db.get_stats()
-    return render_template('index_enhanced.html', stats=stats)
+    return render_template('index.html', stats=stats)
 
 
 @app.route('/files')
